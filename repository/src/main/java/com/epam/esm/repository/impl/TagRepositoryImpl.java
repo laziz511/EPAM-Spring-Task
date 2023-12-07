@@ -1,15 +1,12 @@
 package com.epam.esm.repository.impl;
 
 import com.epam.esm.core.entity.Tag;
-import com.epam.esm.core.exception.GiftCertificateNotFoundException;
-import com.epam.esm.core.exception.GiftCertificateOperationException;
 import com.epam.esm.core.exception.TagNotFoundException;
 import com.epam.esm.core.exception.TagOperationException;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.mapper.TagRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;

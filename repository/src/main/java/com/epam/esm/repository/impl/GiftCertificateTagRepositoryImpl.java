@@ -10,9 +10,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Repository
@@ -27,9 +34,14 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public void save(GiftCertificateTag giftCertificateTag) throws GiftCertificateOperationException {
+    public GiftCertificateTag save(GiftCertificateTag giftCertificateTag) throws GiftCertificateOperationException {
         try {
-            jdbcTemplate.update(INSERT, giftCertificateTag.getGiftCertificateId(), giftCertificateTag.getTagId());
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(connection -> prepareInsertStatement(connection, giftCertificateTag), keyHolder);
+
+            giftCertificateTag.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+
+            return giftCertificateTag;
         } catch (DataAccessException e) {
             log.error("Error occurred while saving gift certificate tag association", e);
             throw new GiftCertificateOperationException("Error occurred while saving gift certificate tag association", e);
@@ -47,12 +59,21 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     }
 
     @Override
-    public GiftCertificateTag findById(Long associationId) throws GiftCertificateNotFoundException {
+    public Optional<GiftCertificateTag> findById(Long associationId) throws GiftCertificateNotFoundException {
         try {
-            return jdbcTemplate.queryForObject(SELECT_BY_ID, giftCertificateTagRowMapper, associationId);
+            GiftCertificateTag association = jdbcTemplate.queryForObject(SELECT_BY_ID, giftCertificateTagRowMapper, associationId);
+            return Optional.ofNullable(association);
         } catch (DataAccessException e) {
             log.error("Error occurred while getting association with ID: {}", associationId, e);
             throw new GiftCertificateNotFoundException("Error occurred while getting association", e);
         }
+    }
+
+
+    private PreparedStatement prepareInsertStatement(Connection connection, GiftCertificateTag giftCertificateTag) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement(INSERT, new String[]{"id"});
+        ps.setLong(1, giftCertificateTag.getGiftCertificateId());
+        ps.setLong(2, giftCertificateTag.getTagId());
+        return ps;
     }
 }

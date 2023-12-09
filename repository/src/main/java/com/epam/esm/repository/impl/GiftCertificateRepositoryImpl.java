@@ -9,6 +9,7 @@ import com.epam.esm.repository.utils.GiftCertificateQueryBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -52,13 +53,16 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     }
 
     @Override
-    public Optional<GiftCertificate> findById(Long id) throws GiftCertificateNotFoundException {
+    public Optional<GiftCertificate> findById(Long id) throws GiftCertificateNotFoundException, GiftCertificateOperationException {
         try {
             GiftCertificate giftCertificate = jdbcTemplate.queryForObject(SELECT_BY_ID, new GiftCertificateRowMapper(), id);
             return Optional.ofNullable(giftCertificate);
-        } catch (RuntimeException e) {
+        } catch (EmptyResultDataAccessException e) {
             log.error("Error occurred while getting gift certificate with id = {}", id, e);
             throw new GiftCertificateNotFoundException("Gift certificate not found with id: " + id, e);
+        } catch (DataAccessException e) {
+            log.error("Error occurred while getting gift certificate with id = {}", id, e);
+            throw new GiftCertificateOperationException("Error occurred while getting gift certificate", e);
         }
     }
 
@@ -66,9 +70,9 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     public List<GiftCertificate> findAll() throws GiftCertificateOperationException {
         try {
             return jdbcTemplate.query(SELECT_ALL, new GiftCertificateRowMapper());
-        } catch (RuntimeException e) {
+        } catch (DataAccessException e) {
             log.error("Error occurred while getting all gift certificates", e);
-            throw new GiftCertificateNotFoundException("Error occurred while getting all gift certificates", e);
+            throw new GiftCertificateOperationException("Error occurred while getting all gift certificates", e);
         }
     }
 
@@ -92,7 +96,7 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     public void delete(Long id) throws GiftCertificateOperationException {
         try {
             jdbcTemplate.update(DELETE, id);
-        } catch (RuntimeException e) {
+        } catch (DataAccessException e) {
             log.error("Error occurred while deleting gift certificate with id = {}", id, e);
             throw new GiftCertificateOperationException("Error occurred while deleting gift certificate", e);
         }

@@ -65,6 +65,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
     }
 
     @Override
+    @Transactional
     public GiftCertificate updateGiftCertificate(Long id, GiftCertificate updatedGiftCertificate) {
         GiftCertificate existingGiftCertificate = giftCertificateRepository.findById(id)
                 .orElseThrow(() -> new GiftCertificateNotFoundException("Gift certificate not found with ID: " + id));

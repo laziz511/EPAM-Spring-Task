@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(GiftCertificateOperationException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ApiErrorResponse> handleGiftCertificateOperationException(GiftCertificateOperationException ex) {
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, GIFT_CERTIFICATE_OPERATION_ERROR);
+        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, GIFT_CERTIFICATE_OPERATION_ERROR);
     }
 
     /**
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TagOperationException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ApiErrorResponse> handleTagOperationException(TagOperationException ex) {
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, TAG_OPERATION_ERROR);
+        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, TAG_OPERATION_ERROR);
     }
 
     /**

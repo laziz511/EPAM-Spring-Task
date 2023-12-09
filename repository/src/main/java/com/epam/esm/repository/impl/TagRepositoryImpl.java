@@ -57,7 +57,7 @@ public class TagRepositoryImpl implements TagRepository {
         try {
             Tag tag = jdbcTemplate.queryForObject(SELECT_BY_ID, new TagRowMapper(), id);
             return Optional.ofNullable(tag);
-        } catch (RuntimeException e) {
+        } catch (EmptyResultDataAccessException e) {
             log.error("Error occurred while getting tag with id = {}", id, e);
             throw new TagNotFoundException("Tag not found with id: " + id, e);
         }

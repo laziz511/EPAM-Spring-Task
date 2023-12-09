@@ -10,6 +10,7 @@ import com.epam.esm.service.GiftCertificateService;
 import com.epam.esm.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
@@ -26,7 +27,8 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
     private final TagService tagService;
 
     @Override
-    public GiftCertificate createGiftCertificate(GiftCertificate giftCertificate) {
+    @Transactional
+    public GiftCertificate create(GiftCertificate giftCertificate) {
         LocalDateTime currentDateTime = LocalDateTime.now();
 
         giftCertificate.setCreateDate(currentDateTime);
@@ -36,7 +38,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
 
         List<Tag> tags = giftCertificate.getTags();
         if (!CollectionUtils.isEmpty(tags)) {
-            updateTags(tags);
+            updateOrCreateTags(tags);
 
             createdCertificate.setTags(tags);
             saveTagAssociations(createdCertificate, tags);
@@ -45,7 +47,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
     }
 
     @Override
-    public GiftCertificate findGiftCertificateById(Long id) {
+    public GiftCertificate findById(Long id) {
         Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id)
                 .map(this::populateTags);
 
@@ -56,7 +58,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
     }
 
     @Override
-    public List<GiftCertificate> findAllGiftCertificates() {
+    public List<GiftCertificate> findAll() {
         List<GiftCertificate> certificates = giftCertificateRepository.findAll();
         certificates.forEach(this::populateTags);
         return certificates;
@@ -71,7 +73,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
 
         List<Tag> updatedTags = updatedGiftCertificate.getTags();
         if (!CollectionUtils.isEmpty(updatedTags)) {
-            updateTags(updatedTags);
+            updateOrCreateTags(updatedTags);
 
             existingGiftCertificate.setTags(updatedTags);
             saveTagAssociations(existingGiftCertificate, updatedTags);
@@ -82,7 +84,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
     }
 
     @Override
-    public void deleteGiftCertificate(Long id) {
+    public void delete(Long id) {
         giftCertificateRepository.delete(id);
     }
 
@@ -98,7 +100,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
         List<GiftCertificateTag> associations = giftCertificateTagRepository.findAssociationsByGiftCertificateId(certificate.getId());
 
         List<Tag> tags = associations.stream()
-                .map(association -> tagService.findTagById(association.getTagId()))
+                .map(association -> tagService.findById(association.getTagId()))
                 .collect(Collectors.toList());
 
         certificate.setTags(tags);
@@ -114,11 +116,16 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
         }
     }
 
-    private void updateTags(List<Tag> updatedTags) {
+    private void updateOrCreateTags(List<Tag> updatedTags) {
         for (Tag tag : updatedTags) {
             Optional<Tag> existingTag = tagService.findTagByName(tag.getName());
-            Tag savedTag = existingTag.orElseGet(() -> tagService.createTag(tag));
-            tag.setId(savedTag.getId());
+
+            if (existingTag.isPresent()) {
+                tag.setId(existingTag.get().getId());
+            } else {
+                Tag savedTag = tagService.create(tag);
+                tag.setId(savedTag.getId());
+            }
         }
     }
 

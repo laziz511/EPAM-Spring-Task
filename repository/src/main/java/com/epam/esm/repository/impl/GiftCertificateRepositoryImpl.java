@@ -5,6 +5,7 @@ import com.epam.esm.core.exception.GiftCertificateNotFoundException;
 import com.epam.esm.core.exception.GiftCertificateOperationException;
 import com.epam.esm.repository.GiftCertificateRepository;
 import com.epam.esm.repository.mapper.GiftCertificateRowMapper;
+import com.epam.esm.repository.utils.GiftCertificateQueryBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -100,48 +101,24 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
     @Override
     public List<GiftCertificate> findCertificatesByCriteria(String tagName, String search, String sortBy, boolean ascending) throws GiftCertificateOperationException {
         try {
-            StringBuilder queryBuilder = new StringBuilder("SELECT * FROM gift_certificates gc WHERE 1=1");
-
-            List<Object> queryParams = new ArrayList<>();
+            GiftCertificateQueryBuilder queryBuilder = new GiftCertificateQueryBuilder();
 
             if (tagName != null) {
-                addTagCriteria(queryBuilder, queryParams, tagName);
+                queryBuilder.addTagCriteria(tagName);
             }
 
             if (search != null && !search.isEmpty()) {
-                addSearchCriteria(queryBuilder, queryParams, search);
+                queryBuilder.addSearchCriteria(search);
             }
 
             if (sortBy != null) {
-                addSortingCriteria(queryBuilder, sortBy, ascending);
+                queryBuilder.addSortingCriteria(sortBy, ascending);
             }
 
-            return jdbcTemplate.query(queryBuilder.toString(), queryParams.toArray(), new GiftCertificateRowMapper());
+            return jdbcTemplate.query(queryBuilder.build(), queryBuilder.getQueryParams(), new GiftCertificateRowMapper());
         } catch (DataAccessException e) {
             log.error("Error occurred while searching for certificates by criteria", e);
             throw new GiftCertificateOperationException("Error occurred while searching for certificates by criteria", e);
-        }
-    }
-
-    private void addTagCriteria(StringBuilder queryBuilder, List<Object> queryParams, String tagName) {
-        queryBuilder.append(" AND EXISTS (SELECT 1 FROM gift_certificate_tags gct JOIN tags t ON gct.tag_id = t.id WHERE gct.gift_certificate_id = gc.id AND t.name = ?)");
-        queryParams.add(tagName);
-    }
-
-    private void addSearchCriteria(StringBuilder queryBuilder, List<Object> queryParams, String search) {
-        queryBuilder.append(" AND (gc.name ILIKE ? OR gc.description ILIKE ?)");
-        queryParams.add("%" + search + "%");
-        queryParams.add("%" + search + "%");
-    }
-
-    private void addSortingCriteria(StringBuilder queryBuilder, String sortBy, boolean ascending) {
-        String sortField = sortBy.equals("name") ? "gc.name" : "gc.create_date";
-        queryBuilder.append(" ORDER BY ").append(sortField);
-
-        if (ascending) {
-            queryBuilder.append(" ASC");
-        } else {
-            queryBuilder.append(" DESC");
         }
     }
 

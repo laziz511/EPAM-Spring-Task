@@ -7,8 +7,8 @@ import com.epam.esm.core.exception.GiftCertificateOperationException;
 import java.util.List;
 
 public interface GiftCertificateTagRepository {
-
-    GiftCertificateTag save(GiftCertificateTag giftCertificateTag) throws GiftCertificateOperationException;
-
+    void save(GiftCertificateTag giftCertificateTag) throws GiftCertificateOperationException;
     List<GiftCertificateTag> findAssociationsByGiftCertificateId(Long giftCertificateId) throws GiftCertificateNotFoundException;
+    GiftCertificateTag findById(Long associationId) throws GiftCertificateNotFoundException;
 }
+

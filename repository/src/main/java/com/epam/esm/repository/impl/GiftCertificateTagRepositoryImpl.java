@@ -21,16 +21,15 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
 
     private static final String INSERT = "INSERT INTO gift_certificate_tags (gift_certificate_id, tag_id) VALUES (?, ?)";
     private static final String SELECT_ASSOCIATIONS_BY_CERTIFICATE_ID = "SELECT * FROM gift_certificate_tags WHERE gift_certificate_id = ?";
+    private static final String SELECT_BY_ID = "SELECT * FROM gift_certificate_tags WHERE id = ?";
 
     private final RowMapper<GiftCertificateTag> giftCertificateTagRowMapper = new GiftCertificateTagRowMapper();
     private final JdbcTemplate jdbcTemplate;
 
-
     @Override
-    public GiftCertificateTag save(GiftCertificateTag giftCertificateTag) throws GiftCertificateOperationException {
+    public void save(GiftCertificateTag giftCertificateTag) throws GiftCertificateOperationException {
         try {
             jdbcTemplate.update(INSERT, giftCertificateTag.getGiftCertificateId(), giftCertificateTag.getTagId());
-            return giftCertificateTag;
         } catch (DataAccessException e) {
             log.error("Error occurred while saving gift certificate tag association", e);
             throw new GiftCertificateOperationException("Error occurred while saving gift certificate tag association", e);
@@ -44,6 +43,16 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         } catch (DataAccessException e) {
             log.error("Error occurred while getting associations for gift certificate with ID: {}", giftCertificateId, e);
             throw new GiftCertificateNotFoundException("Error occurred while getting associations for gift certificate", e);
+        }
+    }
+
+    @Override
+    public GiftCertificateTag findById(Long associationId) throws GiftCertificateNotFoundException {
+        try {
+            return jdbcTemplate.queryForObject(SELECT_BY_ID, giftCertificateTagRowMapper, associationId);
+        } catch (DataAccessException e) {
+            log.error("Error occurred while getting association with ID: {}", associationId, e);
+            throw new GiftCertificateNotFoundException("Error occurred while getting association", e);
         }
     }
 }

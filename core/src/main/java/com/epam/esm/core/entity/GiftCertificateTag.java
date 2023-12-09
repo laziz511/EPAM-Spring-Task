@@ -8,8 +8,8 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class GiftCertificateTag {
-
     private Long id;
     private Long giftCertificateId;
     private Long tagId;

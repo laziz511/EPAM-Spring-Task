@@ -33,7 +33,6 @@ public class DataSourceConfig {
         config.setPassword(password);
         config.setDriverClassName(driverClassName);
 
-        // HikariCP specific settings
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setIdleTimeout(30000);

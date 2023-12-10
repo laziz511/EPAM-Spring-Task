@@ -8,8 +8,8 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class GiftCertificateTag {
-
     private Long id;
     private Long giftCertificateId;
     private Long tagId;
@@ -19,11 +19,11 @@ public class GiftCertificateTag {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GiftCertificateTag that = (GiftCertificateTag) o;
-        return Objects.equals(tagId, that.tagId) && Objects.equals(giftCertificateId, that.giftCertificateId);
+        return Objects.equals(id, that.id) && Objects.equals(giftCertificateId, that.giftCertificateId) && Objects.equals(tagId, that.tagId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tagId, giftCertificateId);
+        return Objects.hash(id, giftCertificateId, tagId);
     }
 }

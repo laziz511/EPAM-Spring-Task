@@ -57,7 +57,7 @@ public class TagRepositoryImpl implements TagRepository {
         try {
             Tag tag = jdbcTemplate.queryForObject(SELECT_BY_ID, new TagRowMapper(), id);
             return Optional.ofNullable(tag);
-        } catch (RuntimeException e) {
+        } catch (EmptyResultDataAccessException e) {
             log.error("Error occurred while getting tag with id = {}", id, e);
             throw new TagNotFoundException("Tag not found with id: " + id, e);
         }
@@ -73,11 +73,12 @@ public class TagRepositoryImpl implements TagRepository {
         }
     }
 
+
     @Override
     public List<Tag> findAll() throws TagNotFoundException {
         try {
             return jdbcTemplate.query(SELECT_ALL, new TagRowMapper());
-        } catch (RuntimeException e) {
+        } catch (DataAccessException e) {
             log.error("Error occurred while getting all tags", e);
             throw new TagNotFoundException("Error occurred while getting all tags", e);
         }
@@ -87,10 +88,9 @@ public class TagRepositoryImpl implements TagRepository {
     public void delete(Long id) throws TagOperationException {
         try {
             jdbcTemplate.update(DELETE, id);
-        } catch (RuntimeException e) {
+        } catch (DataAccessException e) {
             log.error("Error occurred while deleting tag with id = {}", id, e);
             throw new TagOperationException("Error occurred while deleting tag", e);
         }
     }
-
 }

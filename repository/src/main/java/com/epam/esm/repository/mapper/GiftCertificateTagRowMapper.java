@@ -6,14 +6,16 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static com.epam.esm.repository.Column.*;
+
 public class GiftCertificateTagRowMapper implements RowMapper<GiftCertificateTag> {
 
     @Override
     public GiftCertificateTag mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         GiftCertificateTag association = new GiftCertificateTag();
-        association.setId(resultSet.getLong("id"));
-        association.setGiftCertificateId(resultSet.getLong("gift_certificate_id"));
-        association.setTagId(resultSet.getLong("tag_id"));
+        association.setId(resultSet.getLong(ID));
+        association.setGiftCertificateId(resultSet.getLong(GiftCertificateTagsTable.GIFT_CERTIFICATE_ID));
+        association.setTagId(resultSet.getLong(GiftCertificateTagsTable.TAG_ID));
         return association;
     }
 }

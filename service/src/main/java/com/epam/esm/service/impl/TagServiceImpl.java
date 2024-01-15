@@ -14,13 +14,18 @@ import java.util.Optional;
 import static com.epam.esm.core.constants.ErrorMessageConstants.TAG_NOT_FOUND_ERROR_MESSAGE;
 import static com.epam.esm.core.utils.Validator.validatePageAndSize;
 
-@Service
+/**
+ * Implementation of the {@link TagService} interface.
+ */@Service
 @RequiredArgsConstructor
 @Transactional
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Tag> findAll(int page, int size) {
         validatePageAndSize(page, size, Tag.class);
@@ -28,17 +33,26 @@ public class TagServiceImpl implements TagService {
         return tagRepository.findAll(page, size);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tag findById(Long id) {
         return tagRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(TAG_NOT_FOUND_ERROR_MESSAGE + id, Tag.class));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tag create(Tag tag) {
         return tagRepository.save(tag);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(Long id) {
         Optional<Tag> tag = tagRepository.findById(id);
@@ -49,6 +63,9 @@ public class TagServiceImpl implements TagService {
         tagRepository.delete(tag.get());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Tag> findMostUsedTagOfUserWithHighestOrderCost(Long userId) {
         return tagRepository.findMostUsedTagOfUserWithHighestOrderCost(userId);

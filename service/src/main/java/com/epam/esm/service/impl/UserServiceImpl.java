@@ -13,6 +13,9 @@ import java.util.List;
 import static com.epam.esm.core.constants.ErrorMessageConstants.USER_NOT_FOUND_ERROR_MESSAGE;
 import static com.epam.esm.core.utils.Validator.validatePageAndSize;
 
+/**
+ * Implementation of the {@link UserService} interface.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -20,6 +23,9 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<User> findAll(int page, int size) {
         validatePageAndSize(page, size, User.class);
@@ -27,6 +33,9 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll(page, size);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public User findById(Long id) {
         return userRepository.findById(id)

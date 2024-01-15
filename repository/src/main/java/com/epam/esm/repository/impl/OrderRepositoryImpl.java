@@ -13,11 +13,17 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementation of {@link OrderRepository} using JPA and Hibernate.
+ */
 @Repository
 public class OrderRepositoryImpl implements OrderRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Order> findAll(int page, int size) {
 
@@ -34,18 +40,26 @@ public class OrderRepositoryImpl implements OrderRepository {
         return typedQuery.getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<Order> findById(Long id) {
         return Optional.ofNullable(entityManager.find(Order.class, id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Order save(Order entity) {
         entityManager.persist(entity);
         return entity;
     }
 
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Order> findOrdersInfoByUserId(Long userId, int page, int size) {
 

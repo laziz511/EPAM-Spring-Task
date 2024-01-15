@@ -17,6 +17,9 @@ import java.util.*;
 import static com.epam.esm.core.constants.ErrorMessageConstants.*;
 import static com.epam.esm.core.utils.Validator.validatePageAndSize;
 
+/**
+ * Implementation of the {@link GiftCertificateService} interface.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,6 +27,9 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
 
     private final GiftCertificateRepository giftCertificateRepository;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<GiftCertificate> findAll(int page, int size) {
         validatePageAndSize(page, size, GiftCertificate.class);
@@ -31,12 +37,18 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
         return giftCertificateRepository.findAll(page, size);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate findById(Long id) {
         return giftCertificateRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + id, GiftCertificate.class));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate create(GiftCertificate entity) {
 
@@ -55,6 +67,9 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
         return giftCertificateRepository.save(entity);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate update(Long id, GiftCertificate updatedGiftCertificate) {
 
@@ -74,6 +89,9 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(Long id) {
         Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id);
@@ -84,11 +102,17 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<GiftCertificate> findCertificatesByCriteria(List<String> tagNames, String search, String sortBy, boolean ascending) {
         return giftCertificateRepository.findCertificatesByCriteria(tagNames, search, sortBy, ascending);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate updateGiftCertificateDuration(Long id, Map<String, Integer> requestBody) {
         final String DURATION = "duration";
@@ -107,6 +131,9 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
         return giftCertificateRepository.save(giftCertificate);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate updateGiftCertificatePrice(Long id, Map<String, BigDecimal> requestBody) {
         final String PRICE = "price";

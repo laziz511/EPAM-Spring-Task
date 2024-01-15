@@ -14,11 +14,17 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementation of {@link UserRepository} using JPA and Hibernate.
+ */
 @Repository
 public class UserRepositoryImpl implements UserRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<User> findAll(int page, int size)  {
 
@@ -35,6 +41,9 @@ public class UserRepositoryImpl implements UserRepository {
         return typedQuery.getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<User> findById(Long id) {
         return Optional.ofNullable(entityManager.find(User.class, id));

@@ -20,6 +20,9 @@ import java.util.Optional;
 import static com.epam.esm.core.constants.ErrorMessageConstants.*;
 import static com.epam.esm.core.utils.Validator.validatePageAndSize;
 
+/**
+ * Implementation of the {@link OrderService} interface.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,18 +32,27 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepositoryImpl userRepository;
     private final OrderRepository orderRepository;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Order> findAll(int page, int size) {
         validatePageAndSize(page, size, Order.class);
         return orderRepository.findAll(page, size);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Order findById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ORDER_NOT_FOUND_ERROR_MESSAGE + id, Order.class));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Order create(OrderDTO dto) {
         User user = userRepository.findById(dto.userId())
@@ -53,6 +65,9 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(orderToSave);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Order> findOrdersInfoByUserId(Long userId, int page, int size) {
         validatePageAndSize(page, size, Order.class);

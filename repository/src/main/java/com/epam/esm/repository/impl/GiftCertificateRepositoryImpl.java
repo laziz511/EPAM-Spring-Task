@@ -13,11 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementation of {@link GiftCertificateRepository} using JPA and Hibernate.
+ */
 @Repository
 public class GiftCertificateRepositoryImpl implements GiftCertificateRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<GiftCertificate> findAll(int page, int size) {
 
@@ -33,27 +39,42 @@ public class GiftCertificateRepositoryImpl implements GiftCertificateRepository 
         return typedQuery.getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<GiftCertificate> findById(Long id) {
         return Optional.ofNullable(entityManager.find(GiftCertificate.class, id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate save(GiftCertificate entity) {
         entityManager.persist(entity);
         return entity;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate update(GiftCertificate giftCertificate) {
         return entityManager.merge(giftCertificate);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(GiftCertificate giftCertificate) {
         entityManager.remove(giftCertificate);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<GiftCertificate> findCertificatesByCriteria(List<String> tagNames, String search, String sortBy, boolean ascending) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();

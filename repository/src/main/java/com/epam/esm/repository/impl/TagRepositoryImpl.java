@@ -15,11 +15,17 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementation of {@link TagRepository} using JPA and Hibernate.
+ */
 @Repository
 public class TagRepositoryImpl implements TagRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Tag> findAll(int page, int size) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -35,22 +41,34 @@ public class TagRepositoryImpl implements TagRepository {
         return typedQuery.getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<Tag> findById(Long id) {
         return Optional.ofNullable(entityManager.find(Tag.class, id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tag save(Tag entity) {
         entityManager.persist(entity);
         return entity;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(Tag tag) throws NotFoundException {
         entityManager.remove(tag);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Tag> findMostUsedTagOfUserWithHighestOrderCost(Long userId) {
         String findMostUsedTagOfUserQuery = """

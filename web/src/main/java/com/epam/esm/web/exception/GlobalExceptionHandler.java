@@ -21,6 +21,9 @@ import java.util.Objects;
 
 import static com.epam.esm.core.constants.ErrorCodeConstants.*;
 
+/**
+ * Global exception handler for handling specific exceptions and providing consistent API error responses.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -39,24 +42,50 @@ public class GlobalExceptionHandler {
         OPERATION_ERROR_CODES.put(User.class, USER_OPERATION_ERROR);
     }
 
+    /**
+     * Handles NotFoundException and returns a ResponseEntity with an appropriate API error response.
+     *
+     * @param ex   The NotFoundException that occurred.
+     * @param req  The HttpServletRequest associated with the request.
+     * @return     ResponseEntity containing an API error response.
+     */
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiErrorResponseDTO> handleNotFoundException(NotFoundException ex, HttpServletRequest req) {
         int errorCode = NOT_FOUND_ERROR_CODES.getOrDefault(ex.getExceptionClass(), 0);
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, errorCode);
     }
 
+    /**
+     * Handles OperationException and returns a ResponseEntity with an appropriate API error response.
+     *
+     * @param ex   The OperationException that occurred.
+     * @param req  The HttpServletRequest associated with the request.
+     * @return     ResponseEntity containing an API error response.
+     */
     @ExceptionHandler(OperationException.class)
     public ResponseEntity<ApiErrorResponseDTO> handleOperationException(OperationException ex, HttpServletRequest req) {
         int errorCode = OPERATION_ERROR_CODES.getOrDefault(ex.getExceptionClass(), 0);
         return buildErrorResponse(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, errorCode);
     }
 
+    /**
+     * Handles MethodArgumentNotValidException and returns a ResponseEntity with an appropriate API error response.
+     *
+     * @param ex   The MethodArgumentNotValidException that occurred.
+     * @return     ResponseEntity containing an API error response.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponseDTO> handleValidationException(MethodArgumentNotValidException ex) {
         String errorMessage = Objects.requireNonNull(ex.getBindingResult().getFieldError()).getDefaultMessage();
         return buildErrorResponse(errorMessage, HttpStatus.BAD_REQUEST, VALIDATION_ERROR);
     }
 
+    /**
+     * Handles HttpMessageNotReadableException and returns a ResponseEntity with an appropriate API error response.
+     *
+     * @param ex   The HttpMessageNotReadableException that occurred.
+     * @return     ResponseEntity containing an API error response.
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponseDTO> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         String message = "Required field is missing in JSON object";

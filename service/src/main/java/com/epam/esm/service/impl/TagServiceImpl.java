@@ -9,14 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 import static com.epam.esm.core.constants.ErrorMessageConstants.TAG_NOT_FOUND_ERROR_MESSAGE;
 import static com.epam.esm.core.utils.Validator.validatePageAndSize;
 
 /**
  * Implementation of the {@link TagService} interface.
- */@Service
+ */
+@Service
 @RequiredArgsConstructor
 @Transactional
 public class TagServiceImpl implements TagService {
@@ -53,15 +53,14 @@ public class TagServiceImpl implements TagService {
     /**
      * {@inheritDoc}
      */
-    @Override
     public void delete(Long id) {
-        Optional<Tag> tag = tagRepository.findById(id);
+        Tag tagToDelete = tagRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(TAG_NOT_FOUND_ERROR_MESSAGE + id, Tag.class));
 
-        if (tag.isEmpty())
-            throw new NotFoundException(TAG_NOT_FOUND_ERROR_MESSAGE + id, Tag.class);
-
-        tagRepository.delete(tag.get());
+        tagToDelete.getGiftCertificates().forEach(giftCertificate -> giftCertificate.getTags().remove(tagToDelete));
+        tagRepository.delete(tagToDelete);
     }
+
 
     /**
      * {@inheritDoc}

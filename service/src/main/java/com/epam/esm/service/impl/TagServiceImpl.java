@@ -1,20 +1,38 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.core.entity.Tag;
-import com.epam.esm.core.exception.TagNotFoundException;
+import com.epam.esm.core.exception.NotFoundException;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.service.TagService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+import static com.epam.esm.core.constants.ErrorMessageConstants.TAG_NOT_FOUND_ERROR_MESSAGE;
+import static com.epam.esm.core.utils.Validator.validatePageAndSize;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
+
+    @Override
+    public List<Tag> findAll(int page, int size) {
+        validatePageAndSize(page, size, Tag.class);
+
+        return tagRepository.findAll(page, size);
+    }
+
+    @Override
+    public Tag findById(Long id) {
+        return tagRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(TAG_NOT_FOUND_ERROR_MESSAGE + id, Tag.class));
+    }
 
     @Override
     public Tag create(Tag tag) {
@@ -22,24 +40,18 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Tag findById(Long id) {
-        Optional<Tag> tag = tagRepository.findById(id);
-        if (tag.isPresent()) return tag.get();
-        else throw new TagNotFoundException("Tag not found with the id: " + id);
-    }
-
-    @Override
-    public Optional<Tag> findTagByName(String name) {
-        return tagRepository.findByName(name);
-    }
-
-    @Override
-    public List<Tag> findAll() {
-        return tagRepository.findAll();
-    }
-
-    @Override
     public void delete(Long id) {
-        tagRepository.delete(id);
+        Optional<Tag> tag = tagRepository.findById(id);
+
+        if (tag.isEmpty())
+            throw new NotFoundException(TAG_NOT_FOUND_ERROR_MESSAGE + id, Tag.class);
+
+        tagRepository.delete(tag.get());
     }
+
+    @Override
+    public List<Tag> findMostUsedTagOfUserWithHighestOrderCost(Long userId) {
+        return tagRepository.findMostUsedTagOfUserWithHighestOrderCost(userId);
+    }
+
 }

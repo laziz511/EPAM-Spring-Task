@@ -1,31 +1,33 @@
 package com.epam.esm.core.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
-import java.util.Objects;
+import java.util.Set;
 
+@Entity(name = "tags")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class Tag {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotBlank(message = "Tag name must not be blank")
     private String name;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Tag tag = (Tag) o;
-        return Objects.equals(id, tag.id) && Objects.equals(name, tag.name);
-    }
+    @ManyToMany(mappedBy = "tags")
+    @JsonIgnoreProperties("tags")
+    private Set<GiftCertificate> giftCertificates;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name);
+    public Tag(Long id, String name) {
+        this.id = id;
+        this.name = name;
     }
 }
-

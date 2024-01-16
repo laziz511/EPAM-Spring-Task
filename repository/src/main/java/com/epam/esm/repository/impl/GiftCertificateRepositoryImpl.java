@@ -1,141 +1,112 @@
 package com.epam.esm.repository.impl;
 
 import com.epam.esm.core.entity.GiftCertificate;
-import com.epam.esm.core.exception.GiftCertificateNotFoundException;
-import com.epam.esm.core.exception.GiftCertificateOperationException;
+import com.epam.esm.core.entity.Tag;
 import com.epam.esm.repository.GiftCertificateRepository;
-import com.epam.esm.repository.mapper.GiftCertificateRowMapper;
-import com.epam.esm.repository.utils.GiftCertificateQueryBuilder;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
-@Slf4j
+/**
+ * Implementation of {@link GiftCertificateRepository} using JPA and Hibernate.
+ */
 @Repository
-@RequiredArgsConstructor
 public class GiftCertificateRepositoryImpl implements GiftCertificateRepository {
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    private static final String SELECT_BY_ID = "SELECT * FROM gift_certificates WHERE id = ?";
-    private static final String SELECT_ALL = "SELECT * FROM gift_certificates";
-    private static final String INSERT = "INSERT INTO gift_certificates (name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String UPDATE = "UPDATE gift_certificates SET name = ?, description = ?, price = ?, duration = ?, last_update_date = ? WHERE id = ?";
-    private static final String DELETE = "DELETE FROM gift_certificates WHERE id = ?";
-
-    private final JdbcTemplate jdbcTemplate;
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public GiftCertificate save(GiftCertificate giftCertificate) throws GiftCertificateOperationException {
-        try {
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(connection -> prepareInsertStatement(connection, giftCertificate), keyHolder);
+    public List<GiftCertificate> findAll(int page, int size) {
 
-            giftCertificate.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteriaQuery.from(GiftCertificate.class);
 
-            return giftCertificate;
-        } catch (DataAccessException e) {
-            log.error("Error occurred while saving gift certificate", e);
-            throw new GiftCertificateOperationException("Error occurred while saving gift certificate", e);
-        }
+        criteriaQuery.select(root);
+
+        TypedQuery<GiftCertificate> typedQuery = entityManager.createQuery(criteriaQuery);
+        typedQuery.setFirstResult((page - 1) * size).setMaxResults(size);
+
+        return typedQuery.getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Optional<GiftCertificate> findById(Long id) throws GiftCertificateNotFoundException, GiftCertificateOperationException {
-        try {
-            GiftCertificate giftCertificate = jdbcTemplate.queryForObject(SELECT_BY_ID, new GiftCertificateRowMapper(), id);
-            return Optional.ofNullable(giftCertificate);
-        } catch (EmptyResultDataAccessException e) {
-            log.error("Error occurred while getting gift certificate with id = {}", id, e);
-            throw new GiftCertificateNotFoundException("Gift certificate not found with id: " + id, e);
-        } catch (DataAccessException e) {
-            log.error("Error occurred while getting gift certificate with id = {}", id, e);
-            throw new GiftCertificateOperationException("Error occurred while getting gift certificate", e);
-        }
+    public Optional<GiftCertificate> findById(Long id) {
+        return Optional.ofNullable(entityManager.find(GiftCertificate.class, id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public List<GiftCertificate> findAll() throws GiftCertificateOperationException {
-        try {
-            return jdbcTemplate.query(SELECT_ALL, new GiftCertificateRowMapper());
-        } catch (DataAccessException e) {
-            log.error("Error occurred while getting all gift certificates", e);
-            throw new GiftCertificateOperationException("Error occurred while getting all gift certificates", e);
-        }
+    public GiftCertificate save(GiftCertificate entity) {
+        entityManager.persist(entity);
+        return entity;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void update(GiftCertificate giftCertificate) throws GiftCertificateNotFoundException, GiftCertificateOperationException {
-        try {
-            int updatedRows = jdbcTemplate.update(UPDATE, giftCertificate.getName(), giftCertificate.getDescription(),
-                    giftCertificate.getPrice(), giftCertificate.getDuration(), giftCertificate.getLastUpdateDate(),
-                    giftCertificate.getId());
+    public GiftCertificate update(GiftCertificate giftCertificate) {
+        return entityManager.merge(giftCertificate);
+    }
 
-            if (updatedRows == 0) {
-                throw new GiftCertificateNotFoundException("Gift certificate not found with ID: " + giftCertificate.getId());
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void delete(GiftCertificate giftCertificate) {
+        entityManager.remove(giftCertificate);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<GiftCertificate> findCertificatesByCriteria(List<String> tagNames, String search, String sortBy, boolean ascending) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> query = criteriaBuilder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> certificateRoot = query.from(GiftCertificate.class);
+
+        Predicate finalPredicate = criteriaBuilder.conjunction();
+        List<Predicate> tagPredicates = new ArrayList<>();
+
+        if (tagNames != null && !tagNames.isEmpty()) {
+            for (String tagName : tagNames) {
+                Join<GiftCertificate, Tag> tagJoin = certificateRoot.join("tags");
+                Predicate tagPredicate = criteriaBuilder.equal(tagJoin.get("name"), tagName);
+                tagPredicates.add(tagPredicate);
             }
-        } catch (DataAccessException e) {
-            log.error("Error occurred while updating gift certificate with ID: {}", giftCertificate.getId(), e);
-            throw new GiftCertificateOperationException("Error occurred while updating gift certificate", e);
+            finalPredicate = criteriaBuilder.and(tagPredicates.toArray(new Predicate[0]));
         }
-    }
 
-    @Override
-    public void delete(Long id) throws GiftCertificateOperationException {
-        try {
-            jdbcTemplate.update(DELETE, id);
-        } catch (DataAccessException e) {
-            log.error("Error occurred while deleting gift certificate with id = {}", id, e);
-            throw new GiftCertificateOperationException("Error occurred while deleting gift certificate", e);
+        if (search != null && !search.isEmpty()) {
+            Predicate searchPredicate = criteriaBuilder.or(criteriaBuilder.like(certificateRoot.get("name"), "%" + search + "%"),
+                    criteriaBuilder.like(certificateRoot.get("description"), "%" + search + "%"));
+            finalPredicate = criteriaBuilder.and(finalPredicate, searchPredicate);
         }
-    }
 
-    @Override
-    public List<GiftCertificate> findCertificatesByCriteria(String tagName, String search, String sortBy, boolean ascending) throws GiftCertificateOperationException {
-        try {
-            GiftCertificateQueryBuilder queryBuilder = new GiftCertificateQueryBuilder();
-
-            if (tagName != null) {
-                queryBuilder.addTagCriteria(tagName);
-            }
-
-            if (search != null && !search.isEmpty()) {
-                queryBuilder.addSearchCriteria(search);
-            }
-
-            if (sortBy != null) {
-                queryBuilder.addSortingCriteria(sortBy, ascending);
-            }
-
-            return jdbcTemplate.query(queryBuilder.build(), queryBuilder.getQueryParams(), new GiftCertificateRowMapper());
-        } catch (DataAccessException e) {
-            log.error("Error occurred while searching for certificates by criteria", e);
-            throw new GiftCertificateOperationException("Error occurred while searching for certificates by criteria", e);
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Expression<?> orderField = sortBy.equals("name") ? certificateRoot.get("name") : certificateRoot.get("createdDate");
+            query.orderBy(ascending ? criteriaBuilder.asc(orderField) : criteriaBuilder.desc(orderField));
         }
-    }
 
-    private PreparedStatement prepareInsertStatement(Connection connection, GiftCertificate giftCertificate) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement(INSERT, new String[]{"id"});
-        ps.setString(1, giftCertificate.getName());
-        ps.setString(2, giftCertificate.getDescription());
-        ps.setBigDecimal(3, giftCertificate.getPrice());
-        ps.setInt(4, giftCertificate.getDuration());
-        ps.setTimestamp(5, Timestamp.valueOf(giftCertificate.getCreateDate()));
-        ps.setTimestamp(6, Timestamp.valueOf(giftCertificate.getLastUpdateDate()));
+        query.where(finalPredicate);
 
-        return ps;
-
+        TypedQuery<GiftCertificate> typedQuery = entityManager.createQuery(query);
+        return typedQuery.getResultList();
     }
 }

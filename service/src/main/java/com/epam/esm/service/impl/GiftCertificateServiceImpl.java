@@ -1,153 +1,154 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.core.entity.GiftCertificate;
-import com.epam.esm.core.entity.GiftCertificateTag;
 import com.epam.esm.core.entity.Tag;
-import com.epam.esm.core.exception.GiftCertificateNotFoundException;
+import com.epam.esm.core.exception.NotFoundException;
+import com.epam.esm.core.exception.OperationException;
 import com.epam.esm.repository.GiftCertificateRepository;
-import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.service.GiftCertificateService;
-import com.epam.esm.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
-@RequiredArgsConstructor
+import static com.epam.esm.core.constants.ErrorMessageConstants.*;
+import static com.epam.esm.core.utils.Validator.validatePageAndSize;
+
+/**
+ * Implementation of the {@link GiftCertificateService} interface.
+ */
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class GiftCertificateServiceImpl implements GiftCertificateService {
 
-    private final GiftCertificateTagRepository giftCertificateTagRepository;
     private final GiftCertificateRepository giftCertificateRepository;
-    private final TagService tagService;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    @Transactional
-    public GiftCertificate create(GiftCertificate giftCertificate) {
-        LocalDateTime currentDateTime = LocalDateTime.now();
+    public List<GiftCertificate> findAll(int page, int size) {
+        validatePageAndSize(page, size, GiftCertificate.class);
 
-        giftCertificate.setCreateDate(currentDateTime);
-        giftCertificate.setLastUpdateDate(currentDateTime);
-
-        GiftCertificate createdCertificate = giftCertificateRepository.save(giftCertificate);
-
-        List<Tag> tags = giftCertificate.getTags();
-        if (!CollectionUtils.isEmpty(tags)) {
-            updateOrCreateTags(tags);
-
-            createdCertificate.setTags(tags);
-            saveTagAssociations(createdCertificate, tags);
-        }
-        return createdCertificate;
+        return giftCertificateRepository.findAll(page, size);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public GiftCertificate findById(Long id) {
-        Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id)
-                .map(this::populateTags);
-
-        if (giftCertificate.isPresent())
-            return giftCertificate.get();
-        else
-            throw new GiftCertificateNotFoundException("Not found");
+        return giftCertificateRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + id, GiftCertificate.class));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public List<GiftCertificate> findAll() {
-        List<GiftCertificate> certificates = giftCertificateRepository.findAll();
-        certificates.forEach(this::populateTags);
-        return certificates;
-    }
+    public GiftCertificate create(GiftCertificate entity) {
 
-    @Override
-    @Transactional
-    public GiftCertificate updateGiftCertificate(Long id, GiftCertificate updatedGiftCertificate) {
-        GiftCertificate existingGiftCertificate = giftCertificateRepository.findById(id)
-                .orElseThrow(() -> new GiftCertificateNotFoundException("Gift certificate not found with ID: " + id));
+        entity.setCreatedDate(LocalDateTime.now());
+        List<Tag> tags = entity.getTags();
 
-        updateFields(existingGiftCertificate, updatedGiftCertificate);
-
-        List<Tag> updatedTags = updatedGiftCertificate.getTags();
-        if (!CollectionUtils.isEmpty(updatedTags)) {
-            updateOrCreateTags(updatedTags);
-
-            existingGiftCertificate.setTags(updatedTags);
-            saveTagAssociations(existingGiftCertificate, updatedTags);
+        if (tags == null) {
+            tags = new ArrayList<>();
         }
+        for (Tag tag : tags) {
+            if (tag.getGiftCertificates() == null) tag.setGiftCertificates(new HashSet<>());
 
-        giftCertificateRepository.update(existingGiftCertificate);
-        return existingGiftCertificate;
+            tag.getGiftCertificates().add(entity);
+        }
+        entity.setTags(tags);
+        return giftCertificateRepository.save(entity);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public GiftCertificate update(Long id, GiftCertificate updatedGiftCertificate) {
+
+        Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id);
+
+        if (giftCertificate.isEmpty())
+            throw new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + id, GiftCertificate.class);
+
+        updatedGiftCertificate.setId(id);
+        updatedGiftCertificate.setCreatedDate(giftCertificate.get().getCreatedDate());
+        updatedGiftCertificate.setLastUpdatedDate(LocalDateTime.now());
+
+        try {
+            return giftCertificateRepository.update(updatedGiftCertificate);
+        } catch (Exception ex) {
+            throw new OperationException(GIFT_CERTIFICATE_FAILED_UPDATE_ERROR_MESSAGE + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(Long id) {
-        giftCertificateRepository.delete(id);
+        Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id);
+        if (giftCertificate.isEmpty())
+            throw new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + id, GiftCertificate.class);
+
+        giftCertificateRepository.delete(giftCertificate.get());
+
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public List<GiftCertificate> findCertificatesByCriteria(String tagName, String search, String sortBy, boolean ascending) {
-        List<GiftCertificate> certificatesByCriteria = giftCertificateRepository.findCertificatesByCriteria(tagName, search, sortBy, ascending);
-
-        certificatesByCriteria.forEach(this::populateTags);
-        return certificatesByCriteria;
+    public List<GiftCertificate> findCertificatesByCriteria(List<String> tagNames, String search, String sortBy, boolean ascending) {
+        return giftCertificateRepository.findCertificatesByCriteria(tagNames, search, sortBy, ascending);
     }
 
-    private GiftCertificate populateTags(GiftCertificate certificate) {
-        List<GiftCertificateTag> associations = giftCertificateTagRepository.findAssociationsByGiftCertificateId(certificate.getId());
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public GiftCertificate updateGiftCertificateDuration(Long id, Map<String, Integer> requestBody) {
+        final String DURATION = "duration";
+        if (!requestBody.containsKey(DURATION))
+            throw new OperationException(REQUEST_BODY_MISSING_FIELD_ERROR_MESSAGE + DURATION, GiftCertificate.class);
 
-        List<Tag> tags = associations.stream()
-                .map(association -> tagService.findById(association.getTagId()))
-                .collect(Collectors.toList());
+        Integer durationResult = requestBody.get(DURATION);
 
-        certificate.setTags(tags);
-        return certificate;
+        GiftCertificate giftCertificate = giftCertificateRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + id, GiftCertificate.class));
+
+        giftCertificate.setDuration(durationResult);
+        giftCertificate.setCreatedDate(giftCertificate.getCreatedDate());
+        giftCertificate.setLastUpdatedDate(LocalDateTime.now());
+
+        return giftCertificateRepository.save(giftCertificate);
     }
 
-    private void saveTagAssociations(GiftCertificate createdCertificate, List<Tag> tags) {
-        for (Tag tag : tags) {
-            GiftCertificateTag association = new GiftCertificateTag();
-            association.setGiftCertificateId(createdCertificate.getId());
-            association.setTagId(tag.getId());
-            giftCertificateTagRepository.save(association);
-        }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public GiftCertificate updateGiftCertificatePrice(Long id, Map<String, BigDecimal> requestBody) {
+        final String PRICE = "price";
+        if (!requestBody.containsKey(PRICE))
+            throw new OperationException(REQUEST_BODY_MISSING_FIELD_ERROR_MESSAGE + PRICE, GiftCertificate.class);
+
+        BigDecimal price = requestBody.get(PRICE);
+
+        GiftCertificate giftCertificate = giftCertificateRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + id, GiftCertificate.class));
+
+        giftCertificate.setPrice(price);
+        giftCertificate.setCreatedDate(giftCertificate.getCreatedDate());
+        giftCertificate.setLastUpdatedDate(LocalDateTime.now());
+
+        return giftCertificateRepository.save(giftCertificate);
     }
-
-    private void updateOrCreateTags(List<Tag> updatedTags) {
-        for (Tag tag : updatedTags) {
-            Optional<Tag> existingTag = tagService.findTagByName(tag.getName());
-
-            if (existingTag.isPresent()) {
-                tag.setId(existingTag.get().getId());
-            } else {
-                Tag savedTag = tagService.create(tag);
-                tag.setId(savedTag.getId());
-            }
-        }
-    }
-
-    private static void updateFields(GiftCertificate existingGiftCertificate, GiftCertificate updatedGiftCertificate) {
-        if (updatedGiftCertificate.getName() != null) {
-            existingGiftCertificate.setName(updatedGiftCertificate.getName());
-        }
-
-        if (updatedGiftCertificate.getDescription() != null) {
-            existingGiftCertificate.setDescription(updatedGiftCertificate.getDescription());
-        }
-
-        if (updatedGiftCertificate.getPrice() != null) {
-            existingGiftCertificate.setPrice(updatedGiftCertificate.getPrice());
-        }
-
-        if (updatedGiftCertificate.getDuration() != 0) {
-            existingGiftCertificate.setDuration(updatedGiftCertificate.getDuration());
-        }
-
-        existingGiftCertificate.setLastUpdateDate(LocalDateTime.now());
-    }
-
 }

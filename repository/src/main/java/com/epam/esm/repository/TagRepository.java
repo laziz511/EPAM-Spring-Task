@@ -1,18 +1,19 @@
 package com.epam.esm.repository;
 
 import com.epam.esm.core.entity.Tag;
-import com.epam.esm.core.exception.TagNotFoundException;
-import com.epam.esm.core.exception.TagOperationException;
 
 import java.util.List;
-import java.util.Optional;
 
+/**
+ * The interface for repositories that manage Tag entities.
+ */
+public interface TagRepository extends CreatableRepository<Tag>, ReadableRepository<Tag>, DeletableRepository<Tag> {
 
-public interface TagRepository {
-    Tag save(Tag tag) throws TagOperationException;
-    Optional<Tag> findById(Long id) throws TagNotFoundException;
-    Optional<Tag> findByName(String name);
-    List<Tag> findAll() throws TagNotFoundException;
-    void delete(Long id) throws TagOperationException;
+    /**
+     * Finds the most widely used tag of a user with the highest cost of all orders.
+     *
+     * @param userId The identifier of the user for whom to find the most widely used tag.
+     * @return A list of Tags representing the most widely used tag(s) for the specified user with the highest order cost.
+     */
+    List<Tag> findMostUsedTagOfUserWithHighestOrderCost(Long userId);
 }
-

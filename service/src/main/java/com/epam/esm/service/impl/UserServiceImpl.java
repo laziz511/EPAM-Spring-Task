@@ -30,7 +30,6 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserServiceImpl implements UserService {
 
     private final JwtUtil jwtUtil;
@@ -61,6 +60,7 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public User register(RegisterRequest registerRequest) {
         validateDuplicateEmail(registerRequest.email());
         validateDuplicateUsername(registerRequest.username());

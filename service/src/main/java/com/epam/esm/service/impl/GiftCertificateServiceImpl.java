@@ -22,7 +22,6 @@ import static com.epam.esm.core.utils.Validator.validatePageAndSize;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class GiftCertificateServiceImpl implements GiftCertificateService {
 
     private final GiftCertificateRepository giftCertificateRepository;
@@ -50,6 +49,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public GiftCertificate create(GiftCertificate entity) {
 
         entity.setCreatedDate(LocalDateTime.now());
@@ -71,6 +71,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public GiftCertificate update(Long id, GiftCertificate updatedGiftCertificate) {
 
         Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id);
@@ -93,6 +94,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public void delete(Long id) {
         Optional<GiftCertificate> giftCertificate = giftCertificateRepository.findById(id);
         if (giftCertificate.isEmpty())
@@ -114,6 +116,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public GiftCertificate updateGiftCertificateDuration(Long id, Map<String, Integer> requestBody) {
         final String DURATION = "duration";
         if (!requestBody.containsKey(DURATION))
@@ -135,6 +138,7 @@ public class GiftCertificateServiceImpl implements GiftCertificateService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public GiftCertificate updateGiftCertificatePrice(Long id, Map<String, BigDecimal> requestBody) {
         final String PRICE = "price";
         if (!requestBody.containsKey(PRICE))

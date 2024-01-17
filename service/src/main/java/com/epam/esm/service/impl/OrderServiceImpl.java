@@ -25,7 +25,6 @@ import static com.epam.esm.core.utils.Validator.validatePageAndSize;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class OrderServiceImpl implements OrderService {
 
     private final GiftCertificateRepositoryImpl giftCertificateRepository;
@@ -54,6 +53,7 @@ public class OrderServiceImpl implements OrderService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public Order create(OrderDTO dto) {
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_ERROR_MESSAGE + dto.userId(), Order.class));

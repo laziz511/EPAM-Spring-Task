@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +36,8 @@ class OrderServiceImplTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private Authentication authentication;
     @InjectMocks
     private OrderServiceImpl orderService;
 
@@ -101,7 +104,7 @@ class OrderServiceImplTest {
         when(orderRepository.save(any(Order.class))).thenReturn(expectedOrder);
 
         // Act
-        Order result = orderService.create(orderDTO);
+        Order result = orderService.create(orderDTO, authentication);
 
         // Assert
         assertNotNull(result);
@@ -119,7 +122,7 @@ class OrderServiceImplTest {
         when(userRepository.findById(orderDTO.userId())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO));
+        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO, authentication));
         verify(userRepository, times(1)).findById(orderDTO.userId());
         verify(giftCertificateRepository, never()).findById(anyLong());
         verify(orderRepository, never()).save(any(Order.class));
@@ -135,7 +138,7 @@ class OrderServiceImplTest {
         when(giftCertificateRepository.findById(orderDTO.giftCertificateId())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO));
+        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO, authentication));
         verify(userRepository, times(1)).findById(orderDTO.userId());
         verify(giftCertificateRepository, times(1)).findById(orderDTO.giftCertificateId());
         verify(orderRepository, never()).save(any(Order.class));
@@ -153,7 +156,7 @@ class OrderServiceImplTest {
         when(orderRepository.findOrdersInfoByUserId(userId, page, size)).thenReturn(expectedOrders);
 
         // Act
-        List<Order> result = orderService.findOrdersInfoByUserId(userId, page, size);
+        List<Order> result = orderService.findOrdersInfoByUserId(userId, page, size, authentication);
 
         // Assert
         assertEquals(expectedOrders, result);
@@ -171,7 +174,7 @@ class OrderServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> orderService.findOrdersInfoByUserId(userId, page, size));
+        assertThrows(NotFoundException.class, () -> orderService.findOrdersInfoByUserId(userId, page, size, authentication));
         verify(userRepository, times(1)).findById(userId);
         verify(orderRepository, never()).findOrdersInfoByUserId(anyLong(), anyInt(), anyInt());
     }

@@ -4,13 +4,16 @@ import com.epam.esm.core.dto.OrderDTO;
 import com.epam.esm.core.entity.GiftCertificate;
 import com.epam.esm.core.entity.Order;
 import com.epam.esm.core.entity.User;
+import com.epam.esm.core.exception.AuthException;
 import com.epam.esm.core.exception.NotFoundException;
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.impl.GiftCertificateRepositoryImpl;
 import com.epam.esm.repository.impl.UserRepositoryImpl;
 import com.epam.esm.service.OrderService;
+import com.epam.esm.service.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,9 +30,9 @@ import static com.epam.esm.core.utils.Validator.validatePageAndSize;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final GiftCertificateRepositoryImpl giftCertificateRepository;
-    private final UserRepositoryImpl userRepository;
     private final OrderRepository orderRepository;
+    private final UserRepositoryImpl userRepository;
+    private final GiftCertificateRepositoryImpl giftCertificateRepository;
 
     /**
      * {@inheritDoc}
@@ -54,9 +57,14 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     @Transactional
-    public Order create(OrderDTO dto) {
-        User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_ERROR_MESSAGE + dto.userId(), Order.class));
+    public Order create(OrderDTO dto, Authentication authentication) {
+
+        Long userId = dto.userId();
+
+        checkAuthentication(authentication, userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_ERROR_MESSAGE + userId, Order.class));
 
         GiftCertificate giftCertificate = giftCertificateRepository.findById(dto.giftCertificateId())
                 .orElseThrow(() -> new NotFoundException(GIFT_CERTIFICATE_NOT_FOUND_ERROR_MESSAGE + dto.giftCertificateId(), Order.class));
@@ -69,7 +77,10 @@ public class OrderServiceImpl implements OrderService {
      * {@inheritDoc}
      */
     @Override
-    public List<Order> findOrdersInfoByUserId(Long userId, int page, int size) {
+    public List<Order> findOrdersInfoByUserId(Long userId, int page, int size, Authentication authentication) {
+
+        checkAuthentication(authentication, userId);
+
         validatePageAndSize(page, size, Order.class);
 
         Optional<User> user = userRepository.findById(userId);
@@ -80,4 +91,12 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findOrdersInfoByUserId(userId, page, size);
     }
 
+    private static void checkAuthentication(Authentication authentication, Long userId) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            Long authenticatedUserId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+            if (authentication.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || authenticatedUserId.equals(userId))) {
+                throw new AuthException("You are not authorized to perform this action.");
+            }
+        }
+    }
 }

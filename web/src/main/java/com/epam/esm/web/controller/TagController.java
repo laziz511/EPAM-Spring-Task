@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class TagController {
     private final TagModelAssembler tagModelAssembler;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public CollectionModel<TagModel> getTags(
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,
             @RequestParam(required = false, defaultValue = "10", name = "size") int size) {
@@ -31,18 +33,21 @@ public class TagController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public TagModel getTag(@PathVariable("id") Long id) {
         Tag tagModel = tagService.findById(id);
         return tagModelAssembler.toModel(tagModel);
     }
 
     @PostMapping()
+    @PreAuthorize("hasRole('ADMIN')")
     public TagModel saveTag(@RequestBody @Valid Tag tag) {
         Tag savedTag = tagService.create(tag);
         return tagModelAssembler.toModel(savedTag);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteTag(@PathVariable("id") Long id) {
         tagService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

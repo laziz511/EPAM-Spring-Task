@@ -9,6 +9,7 @@ import com.epam.esm.service.impl.TagServiceImpl;
 import com.epam.esm.web.assembler.UserModelAssembler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public CollectionModel<UserModel> getUsers(
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,
             @RequestParam(required = false, defaultValue = "10", name = "size") int size) {
@@ -32,12 +34,14 @@ public class UserController {
     }
 
     @GetMapping(value = "/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public UserModel getUser(@PathVariable("id") Long id) {
         User userModel = userService.findById(id);
         return userModelAssembler.toModel(userModel);
     }
 
     @GetMapping("/{id}/most-used-tag")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public CollectionModel<TagModel> findMostUsedTagOfUserWithHighestOrderCost(@PathVariable("id") Long userId) {
         List<Tag> mostUsedTag = tagService.findMostUsedTagOfUserWithHighestOrderCost(userId);
         return userModelAssembler.toCollectionTagModel(mostUsedTag, userId);

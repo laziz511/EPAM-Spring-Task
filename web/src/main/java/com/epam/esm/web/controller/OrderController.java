@@ -8,6 +8,7 @@ import com.epam.esm.core.model.OrderModel;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class OrderController {
     private final OrderModelAssembler orderModelAssembler;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public CollectionModel<OrderModel> getOrders(
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,
             @RequestParam(required = false, defaultValue = "10", name = "size") int size) {
@@ -30,17 +32,20 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public OrderModel getOrder(@PathVariable("id") Long id) {
         return orderModelAssembler.toModel(orderService.findById(id));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public OrderModel createOrder(@RequestBody @Valid OrderDTO dto) {
         Order createdOrder = orderService.create(dto);
         return orderModelAssembler.toModel(createdOrder);
     }
 
     @GetMapping("/{userId}/user-orders")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public CollectionModel<OrderModel> getOrdersByUserId(
             @PathVariable("userId") Long userId,
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,

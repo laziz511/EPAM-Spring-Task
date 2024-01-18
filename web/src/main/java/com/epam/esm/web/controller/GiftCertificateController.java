@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -39,12 +40,14 @@ public class GiftCertificateController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public GiftCertificateModel saveGiftCertificate(@RequestBody @Valid GiftCertificate giftCertificate) {
         GiftCertificate savedGiftCertificate = giftCertificateService.create(giftCertificate);
         return giftCertificateModelAssembler.toModel(savedGiftCertificate);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public GiftCertificateModel updateGiftCertificate(
             @PathVariable("id") Long id,
             @RequestBody @Valid GiftCertificate updatedGiftCertificate) {
@@ -53,6 +56,7 @@ public class GiftCertificateController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteGiftCertificate(@PathVariable("id") Long id) {
         giftCertificateService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -69,6 +73,7 @@ public class GiftCertificateController {
     }
 
     @PatchMapping("/{id}/duration")
+    @PreAuthorize("hasRole('ADMIN')")
     public GiftCertificateModel updateGiftCertificateDuration(
             @PathVariable("id") Long id,
             @RequestBody @Valid Map<String, Integer> requestBody) {
@@ -78,6 +83,7 @@ public class GiftCertificateController {
     }
 
     @PatchMapping("/{id}/price")
+    @PreAuthorize("hasRole('ADMIN')")
     public GiftCertificateModel updateGiftCertificatePrice(
             @PathVariable("id") Long id,
             @RequestBody @Valid Map<String, BigDecimal> requestBody) {

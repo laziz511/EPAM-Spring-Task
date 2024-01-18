@@ -1,6 +1,5 @@
 package com.epam.esm.repository.impl;
 
-
 import com.epam.esm.core.entity.User;
 import com.epam.esm.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -19,6 +18,7 @@ import java.util.Optional;
  */
 @Repository
 public class UserRepositoryImpl implements UserRepository {
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -49,4 +49,36 @@ public class UserRepositoryImpl implements UserRepository {
         return Optional.ofNullable(entityManager.find(User.class, id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User save(User user) {
+        entityManager.persist(user);
+        return user;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return entityManager.createQuery(
+                        "SELECT u FROM users u WHERE u.username = :username", User.class)
+                .setParameter("username", username)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean existsByEmail(String email) {
+        return entityManager.createQuery(
+                        "SELECT COUNT(u) > 0 FROM users u WHERE u.email = :email", Boolean.class)
+                .setParameter("email", email)
+                .getSingleResult();
+    }
 }

@@ -18,7 +18,6 @@ import static com.epam.esm.core.utils.Validator.validatePageAndSize;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
@@ -46,6 +45,7 @@ public class TagServiceImpl implements TagService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public Tag create(Tag tag) {
         return tagRepository.save(tag);
     }
@@ -53,6 +53,8 @@ public class TagServiceImpl implements TagService {
     /**
      * {@inheritDoc}
      */
+    @Override
+    @Transactional
     public void delete(Long id) {
         Tag tagToDelete = tagRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(TAG_NOT_FOUND_ERROR_MESSAGE + id, Tag.class));

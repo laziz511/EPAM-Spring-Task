@@ -10,7 +10,12 @@ public final class ErrorCodeConstants {
     public static final int TAG_OPERATION_ERROR = 40003;
     public static final int USER_OPERATION_ERROR = 40004;
     public static final int VALIDATION_ERROR = 40005;
-    public static final int FIELD_MISSING_IN_PATCH_REQUEST = 40010;
+    public static final int FIELD_MISSING_IN_PATCH_REQUEST_ERROR = 40010;
+    public static final int AUTHENTICATION_ERROR = 40101;
+    public static final int SC_UNAUTHORIZED_ERROR = 40102;
+    public static final int ACCESS_DENIED_ERROR = 40301;
+    public static final int DUPLICATE_ENTITY_ERROR = 40901;
+
 
     private ErrorCodeConstants() {
     }

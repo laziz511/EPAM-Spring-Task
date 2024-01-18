@@ -4,19 +4,24 @@ import com.epam.esm.core.dto.OrderDTO;
 import com.epam.esm.core.entity.GiftCertificate;
 import com.epam.esm.core.entity.Order;
 import com.epam.esm.core.entity.User;
+import com.epam.esm.core.exception.AuthException;
 import com.epam.esm.core.exception.NotFoundException;
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.impl.GiftCertificateRepositoryImpl;
 import com.epam.esm.repository.impl.UserRepositoryImpl;
+import com.epam.esm.service.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +39,9 @@ class OrderServiceImplTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private Authentication authentication;
 
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -101,7 +109,7 @@ class OrderServiceImplTest {
         when(orderRepository.save(any(Order.class))).thenReturn(expectedOrder);
 
         // Act
-        Order result = orderService.create(orderDTO);
+        Order result = orderService.create(orderDTO, authentication);
 
         // Assert
         assertNotNull(result);
@@ -119,7 +127,7 @@ class OrderServiceImplTest {
         when(userRepository.findById(orderDTO.userId())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO));
+        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO, authentication));
         verify(userRepository, times(1)).findById(orderDTO.userId());
         verify(giftCertificateRepository, never()).findById(anyLong());
         verify(orderRepository, never()).save(any(Order.class));
@@ -135,7 +143,7 @@ class OrderServiceImplTest {
         when(giftCertificateRepository.findById(orderDTO.giftCertificateId())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO));
+        assertThrows(NotFoundException.class, () -> orderService.create(orderDTO, authentication));
         verify(userRepository, times(1)).findById(orderDTO.userId());
         verify(giftCertificateRepository, times(1)).findById(orderDTO.giftCertificateId());
         verify(orderRepository, never()).save(any(Order.class));
@@ -175,4 +183,43 @@ class OrderServiceImplTest {
         verify(userRepository, times(1)).findById(userId);
         verify(orderRepository, never()).findOrdersInfoByUserId(anyLong(), anyInt(), anyInt());
     }
+
+    @Test
+    void testFindUserOrdersNotAuthenticated() {
+        // Arrange
+        int page = 0;
+        int size = 10;
+
+        // Act & Assert
+        AuthException exception = assertThrows(AuthException.class, () -> orderService.findUserOrders(page, size, null));
+        assertEquals("You are not authorized to perform this action.", exception.getMessage());
+
+        verify(orderRepository, never()).findOrdersInfoByUserId(anyLong(), anyInt(), anyInt());
+    }
+
+    @Test
+    void testFindUserOrdersUnauthorized() {
+        // Arrange
+        int page = 0;
+        int size = 10;
+        Long userId = 1L;
+        Long unauthorizedUserId = 2L;
+
+        User user = new User();
+        user.setId(unauthorizedUserId);
+        user.setUsername("username");
+        user.setPassword("password");
+        user.setOrderList(Collections.emptyList());
+
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        // Act & Assert
+        AuthException exception = assertThrows(AuthException.class, () -> orderService.findUserOrders(page, size, authentication));
+        assertEquals("You are not authorized to perform this action.", exception.getMessage());
+
+        verify(orderRepository, never()).findOrdersInfoByUserId(userId, page, size);
+    }
+
 }

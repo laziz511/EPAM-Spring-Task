@@ -2,12 +2,14 @@ package com.epam.esm.web.controller;
 
 import com.epam.esm.core.dto.OrderDTO;
 import com.epam.esm.core.entity.Order;
+import com.epam.esm.core.model.OrderModel;
 import com.epam.esm.service.OrderService;
 import com.epam.esm.web.assembler.OrderModelAssembler;
-import com.epam.esm.core.model.OrderModel;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class OrderController {
     private final OrderModelAssembler orderModelAssembler;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public CollectionModel<OrderModel> getOrders(
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,
             @RequestParam(required = false, defaultValue = "10", name = "size") int size) {
@@ -30,23 +33,38 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public OrderModel getOrder(@PathVariable("id") Long id) {
         return orderModelAssembler.toModel(orderService.findById(id));
     }
 
     @PostMapping
-    public OrderModel createOrder(@RequestBody @Valid OrderDTO dto) {
-        Order createdOrder = orderService.create(dto);
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public OrderModel createOrder(@RequestBody @Valid OrderDTO dto, Authentication authentication) {
+
+        Order createdOrder = orderService.create(dto, authentication);
         return orderModelAssembler.toModel(createdOrder);
     }
 
     @GetMapping("/{userId}/user-orders")
+    @PreAuthorize("hasRole('ADMIN')")
     public CollectionModel<OrderModel> getOrdersByUserId(
             @PathVariable("userId") Long userId,
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,
             @RequestParam(required = false, defaultValue = "10", name = "size") int size) {
 
         List<Order> userOrders = orderService.findOrdersInfoByUserId(userId, page, size);
+        return orderModelAssembler.toCollectionModel(userOrders, page, size);
+    }
+
+    @GetMapping("/my-orders")
+    @PreAuthorize("hasRole('USER')")
+    public CollectionModel<OrderModel> getUserOrders(
+            @RequestParam(required = false, defaultValue = "1", name = "page") int page,
+            @RequestParam(required = false, defaultValue = "10", name = "size") int size,
+            Authentication authentication) {
+
+        List<Order> userOrders = orderService.findUserOrders(page, size, authentication);
         return orderModelAssembler.toCollectionModel(userOrders, page, size);
     }
 

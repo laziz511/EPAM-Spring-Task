@@ -77,9 +77,7 @@ public class OrderServiceImpl implements OrderService {
      * {@inheritDoc}
      */
     @Override
-    public List<Order> findOrdersInfoByUserId(Long userId, int page, int size, Authentication authentication) {
-
-        checkAuthentication(authentication, userId);
+    public List<Order> findOrdersInfoByUserId(Long userId, int page, int size) {
 
         validatePageAndSize(page, size, Order.class);
 
@@ -87,6 +85,23 @@ public class OrderServiceImpl implements OrderService {
 
         if (user.isEmpty())
             throw new NotFoundException(USER_NOT_FOUND_ERROR_MESSAGE + userId, Order.class);
+
+        return orderRepository.findOrdersInfoByUserId(userId, page, size);
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Order> findUserOrders(int page, int size, Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated())
+            throw new AuthException("You are not authorized to perform this action.");
+
+        validatePageAndSize(page, size, Order.class);
+
+        Long userId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
 
         return orderRepository.findOrdersInfoByUserId(userId, page, size);
     }

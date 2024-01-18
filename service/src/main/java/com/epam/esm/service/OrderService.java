@@ -26,8 +26,18 @@ public interface OrderService extends ReadableService<Order> {
      * @param userId         The identifier of the user for whom to retrieve orders.
      * @param page           The page number (starting from 0).
      * @param size           The number of orders per page.
+     * @return A list of Orders with additional information for the specified user, paginated as per the provided parameters.
+     */
+    List<Order> findOrdersInfoByUserId(Long userId, int page, int size);
+
+    /**
+     * Retrieves a list of Orders with additional information for the authenticated user.
+     *
+     * @param page           The page number (starting from 0) to retrieve.
+     * @param size           The number of orders per page, indicating the page size.
      * @param authentication The authentication object containing details of the authenticated user making the request.
      * @return A list of Orders with additional information for the specified user, paginated as per the provided parameters.
      */
-    List<Order> findOrdersInfoByUserId(Long userId, int page, int size, Authentication authentication);
+    List<Order> findUserOrders(int page, int size, Authentication authentication);
+
 }

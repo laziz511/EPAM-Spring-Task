@@ -47,14 +47,24 @@ public class OrderController {
     }
 
     @GetMapping("/{userId}/user-orders")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public CollectionModel<OrderModel> getOrdersByUserId(
             @PathVariable("userId") Long userId,
+            @RequestParam(required = false, defaultValue = "1", name = "page") int page,
+            @RequestParam(required = false, defaultValue = "10", name = "size") int size) {
+
+        List<Order> userOrders = orderService.findOrdersInfoByUserId(userId, page, size);
+        return orderModelAssembler.toCollectionModel(userOrders, page, size);
+    }
+
+    @GetMapping("/my-orders")
+    @PreAuthorize("hasRole('USER')")
+    public CollectionModel<OrderModel> getUserOrders(
             @RequestParam(required = false, defaultValue = "1", name = "page") int page,
             @RequestParam(required = false, defaultValue = "10", name = "size") int size,
             Authentication authentication) {
 
-        List<Order> userOrders = orderService.findOrdersInfoByUserId(userId, page, size, authentication);
+        List<Order> userOrders = orderService.findUserOrders(page, size, authentication);
         return orderModelAssembler.toCollectionModel(userOrders, page, size);
     }
 

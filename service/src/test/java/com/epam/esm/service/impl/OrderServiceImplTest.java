@@ -4,20 +4,24 @@ import com.epam.esm.core.dto.OrderDTO;
 import com.epam.esm.core.entity.GiftCertificate;
 import com.epam.esm.core.entity.Order;
 import com.epam.esm.core.entity.User;
+import com.epam.esm.core.exception.AuthException;
 import com.epam.esm.core.exception.NotFoundException;
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.impl.GiftCertificateRepositoryImpl;
 import com.epam.esm.repository.impl.UserRepositoryImpl;
+import com.epam.esm.service.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +42,7 @@ class OrderServiceImplTest {
 
     @Mock
     private Authentication authentication;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
@@ -156,7 +161,7 @@ class OrderServiceImplTest {
         when(orderRepository.findOrdersInfoByUserId(userId, page, size)).thenReturn(expectedOrders);
 
         // Act
-        List<Order> result = orderService.findOrdersInfoByUserId(userId, page, size, authentication);
+        List<Order> result = orderService.findOrdersInfoByUserId(userId, page, size);
 
         // Assert
         assertEquals(expectedOrders, result);
@@ -174,8 +179,47 @@ class OrderServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> orderService.findOrdersInfoByUserId(userId, page, size, authentication));
+        assertThrows(NotFoundException.class, () -> orderService.findOrdersInfoByUserId(userId, page, size));
         verify(userRepository, times(1)).findById(userId);
         verify(orderRepository, never()).findOrdersInfoByUserId(anyLong(), anyInt(), anyInt());
     }
+
+    @Test
+    void testFindUserOrdersNotAuthenticated() {
+        // Arrange
+        int page = 0;
+        int size = 10;
+
+        // Act & Assert
+        AuthException exception = assertThrows(AuthException.class, () -> orderService.findUserOrders(page, size, null));
+        assertEquals("You are not authorized to perform this action.", exception.getMessage());
+
+        verify(orderRepository, never()).findOrdersInfoByUserId(anyLong(), anyInt(), anyInt());
+    }
+
+    @Test
+    void testFindUserOrdersUnauthorized() {
+        // Arrange
+        int page = 0;
+        int size = 10;
+        Long userId = 1L;
+        Long unauthorizedUserId = 2L;
+
+        User user = new User();
+        user.setId(unauthorizedUserId);
+        user.setUsername("username");
+        user.setPassword("password");
+        user.setOrderList(Collections.emptyList());
+
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        // Act & Assert
+        AuthException exception = assertThrows(AuthException.class, () -> orderService.findUserOrders(page, size, authentication));
+        assertEquals("You are not authorized to perform this action.", exception.getMessage());
+
+        verify(orderRepository, never()).findOrdersInfoByUserId(userId, page, size);
+    }
+
 }

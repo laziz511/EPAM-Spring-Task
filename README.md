@@ -1,6 +1,7 @@
 ## Task
 
 ### Business Requirements:
+
 1. Develop web service for Gift Certificates system with the following entities (many-to-many):
 ![image](https://github.com/laziz511/EPAM-Spring-Task/assets/110926594/8a2ff957-c459-443d-8c17-7c6157f1c3bd)
 
@@ -75,6 +76,8 @@ Duration - in days (expiration period)
 - Hibernate specific features.
 - Spring Data
 
+
+### Deploy application to AWS
 
 
 
